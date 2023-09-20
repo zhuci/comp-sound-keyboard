@@ -9,16 +9,23 @@
 <body>
     <!-- <button>Play</button> -->
     <p>KEYBOARD</p>
-    <select name="osc_Type" id="osc_Type">
-        <option value="sine">Sine</option>
-        <option value="square">Square</option>
-        <option value="sawtooth">Sawtooth</option>
-        <option value="triangle">Triangle</option>
-    </select>
+
+    <h4>Change Waveform!</h1>
+        <form id="osc_Type">
+            <input type="radio" id="sine" name="waveform" value="sine" checked>
+            <label for="sine">Sine</label>
+            <input type="radio" id="sawtooth" name="waveform" value="sawtooth">
+            <label for="sawtooth">Sawtooth</label>
+            <input type="radio" id="square" name="waveform" value="square">
+            <label for="square">Square</label>
+            <input type="radio" id="triangle" name="waveform" value="triangle">
+            <label for="triangle">Triangle</label>
+        </form>
 </body>
 
 <!-- <script src="main.js"></script> -->
 <script src="keyboard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.12.0/tsparticles.confetti.bundle.min.js"></script>
 
 
 </html>
