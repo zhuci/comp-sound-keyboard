@@ -1,18 +1,24 @@
+// ADSR and global vars
+const globalGainMax = 0.6;
+const attackMaxGain = 0.5;
+const attackConstant = 0.002;
+const attackTime = 0.01;
+const decayConstant = 0.002;
+const sustainGain = 0.3;
+const releaseConstant = 0.01;
+const epsilon = 0.001;
+
 document.addEventListener("DOMContentLoaded", function (event) {
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const globalGain = audioCtx.createGain(); //this will control the volume of all notes
-    globalGain.gain.setValueAtTime(0.8, audioCtx.currentTime)
+    globalGain.gain.setValueAtTime(globalGainMax, audioCtx.currentTime)
     globalGain.connect(audioCtx.destination);
 
-    // ADSR 
-    const attackMaxGain = 0.6;
-    const attackTime = 0.1;
-    const decayTime = 0.1;
-    const sustainGain = 0.4;
-    const releaseTime = 0.25;
-    const epsilon = 0.05;
-
+    // for Waveform visualizer
+    const globalAnalyser = audioCtx.createAnalyser();
+    globalGain.connect(globalAnalyser);
+    draw();
 
     const keyboardFrequencyMap = {
         '90': 261.625565300598634,  //Z - C
@@ -58,10 +64,8 @@ document.addEventListener("DOMContentLoaded", function (event) {
         const key = (event.detail || event.which).toString();
         if (keyboardFrequencyMap[key] && activeOscillators[key]) {
             // ADSR Release
-            activeGains[key].gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + releaseTime);
-            activeGains[key].gain.setTargetAtTime(0, audioCtx.currentTime + releaseTime, epsilon);
+            activeGains[key].gain.setTargetAtTime(0, audioCtx.currentTime, releaseConstant);
 
-            // activeOscillators[key].stop();
             delete activeOscillators[key];
             delete activeGains[key];
         }
@@ -75,37 +79,147 @@ document.addEventListener("DOMContentLoaded", function (event) {
         osc.type = document.querySelector('input[name="waveform"]:checked').value;
         // create gain 
         const gainNode = audioCtx.createGain();
-        gainNode.connect(globalGain);
-        osc.connect(gainNode);
-        osc.start();
 
         // active oscillators
         var activeOscCount = Object.keys(activeOscillators).length + 1;
         console.log("active count", activeOscCount)
 
-        // change gain of active ones
-        for (const key in activeOscillators) {
-            activeGains[key].gain.setTargetAtTime(attackMaxGain / activeOscCount, audioCtx.currentTime, 0.01);
-            //     text += "The number is " + i + "<br>";
-        }
+        // adjust for active notes
+        Object.values(activeGains).forEach(function (gainNode) {
+            gainNode.gain.setTargetAtTime(attackMaxGain / activeOscCount, audioCtx.currentTime, epsilon);
+        });
 
         // ADSR Attack
         gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(attackMaxGain / activeOscCount, audioCtx.currentTime + attackTime);
-        // gainNode.gain.setTargetAtTime(0.8, audioCtx.currentTime + 0.1, 0.1);
+        gainNode.gain.setTargetAtTime(attackMaxGain / activeOscCount, audioCtx.currentTime, attackConstant);
 
         // ADSR Decay 
-        // gainNode.gain.exponentialRampToValueAtTime(0.599, audioCtx.currentTime + 0.2);
-        gainNode.gain.setTargetAtTime(sustainGain / activeOscCount, audioCtx.currentTime + decayTime, epsilon);
+        gainNode.gain.setTargetAtTime(sustainGain / activeOscCount, audioCtx.currentTime + attackTime, decayConstant);
+
+        // connect and start
+        osc.connect(gainNode).connect(globalGain);
+        osc.start();
 
         activeOscillators[key] = osc
         activeGains[key] = gainNode
 
-
+        // confetti for fun!
+        confettiHelper(key, osc.type);
     }
 
     function randomInRange(min, max) {
         return Math.random() * (max - min) + min;
+    }
+
+    function confettiHelper(key, waveform) {
+
+        const keyToNoteLetter = {
+            '90': 'C',  //Z - C
+            '83': 'C', //S - C#
+            '88': 'D',  //X - D
+            '68': 'D', //D - D#
+            '67': 'E',  //C - E
+            '86': 'F',  //V - F
+            '71': 'F', //G - F#
+            '66': 'G',  //B - G
+            '72': 'G', //H - G#
+            '78': 'A',  //N - A
+            '74': 'A', //J - A#
+            '77': 'B',  //M - B
+            '81': 'C',  //Q - C
+            '50': 'C', //2 - C#
+            '87': 'D',  //W - D
+            '51': 'D', //3 - D#
+            '69': 'E',  //E - E
+            '82': 'F',  //R - F
+            '53': 'F', //5 - F#
+            '84': 'G',  //T - G
+            '54': 'G', //6 - G#
+            '89': 'A',  //Y - A
+            '55': 'A', //7 - A#
+            '85': 'B',  //U - B
+        }
+
+        const NoteLetterToColors = {
+            'A': ['FFC0CB', 'FF69B4', 'FF1493', 'C71585', 'FF00FF'], // Pink
+            'B': ['660000', '800020', 'FF0800', 'C51E3A', '960018'], // Red
+            'C': ['FF4F00', 'FF7F50', 'F04A00', 'E25822', 'FF5800'],  // Orange
+            'D': ['FFEF00', 'FFD700', 'FADA5E', 'ffd800', 'FFCC33'], // Yellow
+            'E': ['007FFF', '3457D5', '246BCE', '6495ED', 'B9D9EB'], // Blue
+            'F': ['ACE1AF', '177245', '50C878', '00693E', '00A86B'], // Green
+            'G': ['B284BE', '8A2BE2', '9400D3', '8F00FF', '8806CE'] // Violet
+        }
+        const noteLetter = keyToNoteLetter[key]
+        const curColorScheme = NoteLetterToColors[noteLetter]
+
+
+        const WaveformToShape = {
+            'sine': ['star'],
+            'sawtooth': ['polygon'],
+            'square': ['square'],
+            'triangle': ['triangle']
+        }
+
+        const shapes = ['circle', 'square', 'triangle', 'polygon', 'heart', 'star']
+        const randomShapeInd = Math.floor(Math.random() * shapes.length)
+
+        const defaults = {
+            spread: 360,
+            ticks: 50,
+            gravity: 0,
+            decay: 0.94,
+            startVelocity: randomInRange(10, 40),
+        };
+
+
+        confetti({
+            ...defaults,
+            shapes: WaveformToShape[waveform],
+            colors: curColorScheme,
+            particleCount: randomInRange(25, 75),
+            origin: { x: randomInRange(0, 1), y: randomInRange(0, 1) },
+
+        });
+    }
+
+    // from prof's Waveform visualizer
+    function draw() {
+        globalAnalyser.fftSize = 2048;
+        var bufferLength = globalAnalyser.frequencyBinCount;
+        var dataArray = new Uint8Array(bufferLength);
+        globalAnalyser.getByteTimeDomainData(dataArray);
+
+        var canvas = document.querySelector("#globalVisualizer");
+        var canvasCtx = canvas.getContext("2d");
+
+        requestAnimationFrame(draw);
+
+        globalAnalyser.getByteTimeDomainData(dataArray);
+
+        canvasCtx.fillStyle = "white";
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = "rgb(31,117,254)";
+
+        canvasCtx.beginPath();
+
+        var sliceWidth = canvas.width * 1.0 / bufferLength;
+        var x = 0;
+
+        for (var i = 0; i < bufferLength; i++) {
+            var v = dataArray[i] / 128.0;
+            var y = v * canvas.height / 2;
+            if (i === 0) {
+                canvasCtx.moveTo(x, y);
+            } else {
+                canvasCtx.lineTo(x, y);
+            }
+            x += sliceWidth;
+        }
+
+        canvasCtx.lineTo(canvas.width, canvas.height / 2);
+        canvasCtx.stroke();
     }
 
 })
