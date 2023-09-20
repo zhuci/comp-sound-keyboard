@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     window.addEventListener('keyup', keyUp, false);
 
     activeOscillators = {}
+    activeGains = {}
 
     function keyDown(event) {
         const key = (event.detail || event.which).toString();
@@ -47,7 +48,11 @@ document.addEventListener("DOMContentLoaded", function (event) {
     function keyUp(event) {
         const key = (event.detail || event.which).toString();
         if (keyboardFrequencyMap[key] && activeOscillators[key]) {
-            activeOscillators[key].stop();
+            // ADSR Release
+            activeGains[key].gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            activeGains[key].gain.setTargetAtTime(0, audioCtx.currentTime + 0.25, 0.05);
+
+            // activeOscillators[key].stop();
             delete activeOscillators[key];
         }
     }
@@ -56,9 +61,65 @@ document.addEventListener("DOMContentLoaded", function (event) {
         const osc = audioCtx.createOscillator();
         var oscType = document.getElementById("osc_Type");
         osc.frequency.setValueAtTime(keyboardFrequencyMap[key], audioCtx.currentTime);
-        osc.type = oscType.value; //choose your favorite waveform
-        osc.connect(audioCtx.destination);
+        // choose your favorite waveform
+        osc.type = oscType.value;
+        // create gain 
+        const gainNode = audioCtx.createGain();
+        gainNode.connect(globalGain);
+        osc.connect(gainNode);
         osc.start();
+
+        // ADSR Attack
+        gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.799, audioCtx.currentTime + 0.1);
+        // gainNode.gain.setTargetAtTime(0.8, audioCtx.currentTime + 0.1, 0.1);
+
+        // ADSR Decay 
+        // gainNode.gain.exponentialRampToValueAtTime(0.599, audioCtx.currentTime + 0.2);
+        gainNode.gain.setTargetAtTime(0.6, audioCtx.currentTime + 0.1, 0.1);
+
         activeOscillators[key] = osc
+        activeGains[key] = gainNode
     }
+
+    // draw
+    // function draw() {
+    //     globalAnalyser.fftSize = 2048;
+    //     var bufferLength = globalAnalyser.frequencyBinCount;
+    //     var dataArray = new Uint8Array(bufferLength);
+    //     globalAnalyser.getByteTimeDomainData(dataArray);
+
+    //     var canvas = document.querySelector("#globalVisualizer");
+    //     var canvasCtx = canvas.getContext("2d");
+
+    //     requestAnimationFrame(draw);
+
+    //     globalAnalyser.getByteTimeDomainData(dataArray);
+
+    //     canvasCtx.fillStyle = "white";
+    //     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    //     canvasCtx.lineWidth = 2;
+    //     canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+
+    //     canvasCtx.beginPath();
+
+    //     var sliceWidth = canvas.width * 1.0 / bufferLength;
+    //     var x = 0;
+
+    //     for (var i = 0; i < bufferLength; i++) {
+    //         var v = dataArray[i] / 128.0;
+    //         var y = v * canvas.height / 2;
+    //         if (i === 0) {
+    //             canvasCtx.moveTo(x, y);
+    //         } else {
+    //             canvasCtx.lineTo(x, y);
+    //         }
+    //         x += sliceWidth;
+    //     }
+
+    //     canvasCtx.lineTo(canvas.width, canvas.height / 2);
+    //     canvasCtx.stroke();
+    // }
+
 })
