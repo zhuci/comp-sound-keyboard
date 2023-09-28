@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Cindy's Lab 1 ✨</title>
+    <link rel="stylesheet" href="main.css">
+    <!-- font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nothing+You+Could+Do&family=Space+Mono&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- <button>Play</button> -->
+    <h1>Cindy's Lab 1 ✨</h1>
+
+    <p> do you ever feel like a plastic bag...🎆</p>
+    <h4>Select Waveform 😎</h4>
+    <form id="osc_Type">
+        <input type="radio" id="sine" name="waveform" value="sine" checked>
+        <label for="sine">Sine</label>
+        <input type="radio" id="sawtooth" name="waveform" value="sawtooth">
+        <label for="sawtooth">Sawtooth</label>
+        <input type="radio" id="square" name="waveform" value="square">
+        <label for="square">Square</label>
+        <input type="radio" id="triangle" name="waveform" value="triangle">
+        <label for="triangle">Triangle</label>
+    </form>
+
+    <h4> Waveform Visualizer 🤯</h4>
+
+    <div class="container">
+        <canvas id="globalVisualizer" width="200" height="100" style="border:3px solid lightblue">
+            wave form visualizer
+        </canvas>
+    </div>
+
+</body>
+
+<!-- <script src="main.js"></script> -->
+<script src="keyboard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.12.0/tsparticles.confetti.bundle.min.js"></script>
+
+
+</html>
