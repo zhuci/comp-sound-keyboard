@@ -91,20 +91,21 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
             delete activeOscillators[key];
             delete activeAdditiveOscs[key];
+            delete activeAMOscs[key];
             delete activeGains[key];
         }
     }
 
     function playNote(key) {
-        var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var synthType =  document.querySelector('input[name="synthesis"]:checked').value
+        var waveformType = document.querySelector('input[name="waveform"]:checked').value
 
-        var gainNode;
-        var curFreq = keyboardFrequencyMap[key]
 
         if (synthType == "additive") {
             additivePlayNote(key)
-
+        } else if (synthType == "am") {
+            console.log("AM BABY")
+            AMPlayNote(key);
         } else { // no synthesis, normal from hw 1
             normalPlayNote(key)
         }
@@ -118,10 +119,11 @@ document.addEventListener("DOMContentLoaded", function (event) {
         const gainNode = audioCtx.createGain();
 
         // active Osc
-        var activeOscCount = Object.keys(activeOscillators).length;
+        var activeOscCount = Object.keys(activeOscillators).length + Object.keys(activeAMOscs).length + Object.keys(activeFMOscs).length;
         for (let k in activeAdditiveOscs) {
             activeOscCount += activeAdditiveOscs[k].length  
         }
+        console.log("activeOscCount", activeOscCount)
 
         // adjust for active notes
         Object.values(activeGains).forEach(function (gainNode) {
@@ -136,6 +138,26 @@ document.addEventListener("DOMContentLoaded", function (event) {
         gainNode.gain.setTargetAtTime(sustainGain / activeOscCount, audioCtx.currentTime + attackTime, decayConstant);
         
         return gainNode
+    }
+
+    function normalPlayNote(key) {
+        var curFreq = keyboardFrequencyMap[key]
+        var waveformType = document.querySelector('input[name="waveform"]:checked').value
+        var gainNode;
+        
+        const osc = audioCtx.createOscillator();
+        osc.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
+        // choose your favorite waveform
+        osc.type = waveformType;
+        activeOscillators[key] = osc
+
+        // create gain, ADSR A and D
+        gainNode = gainAttackDecay()
+        // // connect and start
+        osc.connect(gainNode).connect(globalGain);
+        osc.start();
+
+        activeGains[key] = gainNode
     }
 
     function additivePlayNote(key) {
@@ -177,25 +199,37 @@ document.addEventListener("DOMContentLoaded", function (event) {
         activeGains[key] = gainNode
     }
 
-    function normalPlayNote(key) {
+    function AMPlayNote(key) {
         var curFreq = keyboardFrequencyMap[key]
+        // TODO: how to set type here? on carrier or modulator or both...?
         var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var gainNode;
-        
-        const osc = audioCtx.createOscillator();
-        osc.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
-        // choose your favorite waveform
-        osc.type = waveformType;
-        activeOscillators[key] = osc
+
+        var carrier = audioCtx.createOscillator();
+        var modulatorFreq = audioCtx.createOscillator();
+        modulatorFreq.frequency.setValueAtTime(100, audioCtx.currentTime);
+        carrier.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
+    
+        const modulated = audioCtx.createGain();
+        const depth = audioCtx.createGain();
+        depth.gain.value = 0.5 //scale modulator output to [-0.5, 0.5]
+        modulated.gain.value = 1.0 - depth.gain.value; //a fixed value of 0.5
+
+        activeOscillators[key] = carrier
+        activeAMOscs[key] = modulatorFreq
 
         // create gain, ADSR A and D
         gainNode = gainAttackDecay()
-        // // connect and start
-        osc.connect(gainNode).connect(globalGain);
-        osc.start();
+    
+        modulatorFreq.connect(depth).connect(modulated.gain); //.connect is additive, so with [-0.5,0.5] and 0.5, the modulated signal now has output gain at [0,1]
+        carrier.connect(modulated)
+        modulated.connect(gainNode);
+        gainNode.connect(globalGain)
+        
+        carrier.start();
+        modulatorFreq.start();
 
         activeGains[key] = gainNode
-        
     }
 
     // from prof's Waveform visualizer
