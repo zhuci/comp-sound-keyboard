@@ -113,6 +113,14 @@ document.addEventListener("DOMContentLoaded", function (event) {
         else { // no synthesis, normal from hw 1
             normalPlayNote(key)
         }
+
+        // TODO: LFO? which oscilator should it be on...? is it only for additive or also AM and FM?
+        // var lfo = audioCtx.createOscillator();
+        // lfo.frequency.value = 0.5;
+        // var lfoGain = audioCtx.createGain();
+        // lfoGain.gain.value = 8;
+        // lfo.connect(lfoGain).connect(osc2.frequency);
+        // lfo.start();
         
         // confetti for fun!
         confettiHelper(key, waveformType);
