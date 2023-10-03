@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Cindy's Lab 1 ✨</title>
+    <title>Cindy's Lab 2 ✨</title>
     <link rel="stylesheet" href="main.css">
     <!-- font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,7 @@
 
 <body>
     <!-- <button>Play</button> -->
-    <h1>Cindy's Lab 1 ✨</h1>
+    <h1>Cindy's Lab 2 ✨</h1>
 
     <p> do you ever feel like a plastic bag...🎆</p>
     <h4>Select Waveform 😎</h4>
@@ -37,10 +37,22 @@
         </canvas>
     </div>
 
+    <h4>Select Synthesis 😎</h4>
+    <form id="osc_Type">
+        <input type="radio" id="none" name="synthesis" value="none" checked>
+        <label for="none">None</label>
+        <input type="radio" id="additive" name="synthesis" value="additive">
+        <label for="additive">Additive</label>
+    </form>
+
+    <h4>How many additive partials? </h4>
+    <input type="range" min="1" max="10" value="5" class="additivePartials" id="additivePartials">
+    <span id="additivePartialsValue"></span>
+
 </body>
 
 <!-- <script src="main.js"></script> -->
-<script src="keyboard.js"></script>
+<script type="module" src="keyboard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.12.0/tsparticles.confetti.bundle.min.js"></script>
 
 
