@@ -38,14 +38,8 @@ export const keyboardFrequencyMap = {
     '85': 987.766602512248223,  //U - B
 }
 
-// sliders and values
-var additivePartialsSlider = document.getElementById("additivePartials");
-var additivePartialOutput = document.getElementById("additivePartialsValue");
-additivePartialOutput.innerHTML = additivePartialsSlider.value;
+sliders()
 
-additivePartialsSlider.oninput = function() {
-    additivePartialOutput.innerHTML = this.value;
-}
 
 document.addEventListener("DOMContentLoaded", function (event) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -113,7 +107,9 @@ document.addEventListener("DOMContentLoaded", function (event) {
             for (let i = 2; i < maxPartial; i++) {
                 var curOsc = audioCtx.createOscillator();
                 var randSign = Math.random() < 0.5 ? -1 : 1;
-                curOsc.frequency.value = (i * curFreq) + randSign * Math.random() * 15;
+                var additiveRandRange = curFreq * parseInt(additiveRandSlider.value) / 100
+                console.log("aas", additiveRandRange, curFreq, parseInt(additiveRandSlider.value))
+                curOsc.frequency.value = (i * curFreq) + randSign * Math.random() * additiveRandRange;
                 curOsc.type = waveformType;
                 newOscs.push(curOsc)
             } 
@@ -126,7 +122,6 @@ document.addEventListener("DOMContentLoaded", function (event) {
             osc.start();
 
             for (let i in newOscs) {
-                console.log("cur", newOscs[i])
                 newOscs[i].connect(gainNode)
                 newOscs[i].start();
             }
@@ -218,3 +213,22 @@ document.addEventListener("DOMContentLoaded", function (event) {
     }
 
 })
+
+// sliders and values
+function sliders() {
+    var additivePartialsSlider = document.getElementById("additivePartials");
+    var additivePartialOutput = document.getElementById("additivePartialsValue");
+    additivePartialOutput.innerHTML = additivePartialsSlider.value;
+
+    additivePartialsSlider.oninput = function() {
+        additivePartialOutput.innerHTML = this.value;
+    }
+
+    var additiveRandSlider = document.getElementById("additiveRand");
+    var additiveRandOutput = document.getElementById("additiveRandValue");
+    additiveRandOutput.innerHTML = additiveRandSlider.value;
+
+    additiveRandSlider.oninput = function() {
+        additiveRandOutput.innerHTML = this.value + '%';
+    }
+}

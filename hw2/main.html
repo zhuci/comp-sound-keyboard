@@ -17,7 +17,7 @@
     <h1>Cindy's Lab 2 ✨</h1>
 
     <p> do you ever feel like a plastic bag...🎆</p>
-    <h4>Select Waveform 😎</h4>
+    <h3>Select Waveform 😎</h4>
     <form id="osc_Type">
         <input type="radio" id="sine" name="waveform" value="sine" checked>
         <label for="sine">Sine</label>
@@ -29,7 +29,7 @@
         <label for="triangle">Triangle</label>
     </form>
 
-    <h4> Waveform Visualizer 🤯</h4>
+    <h3> Waveform Visualizer 🤯</h4>
 
     <div class="container">
         <canvas id="globalVisualizer" width="200" height="100" style="border:3px solid lightblue">
@@ -37,7 +37,7 @@
         </canvas>
     </div>
 
-    <h4>Select Synthesis 😎</h4>
+    <h3>Select Synthesis 😎</h4>
     <form id="osc_Type">
         <input type="radio" id="none" name="synthesis" value="none" checked>
         <label for="none">None</label>
@@ -48,6 +48,10 @@
     <h4>How many additive partials? </h4>
     <input type="range" min="1" max="10" value="5" class="additivePartials" id="additivePartials">
     <span id="additivePartialsValue"></span>
+
+    <h4>How random?</h4>
+    <input type="range" min="0" max="5" step="0.5" value="1" class="additiveRand" id="additiveRand">
+    <span id="additiveRandValue"></span>
 
 </body>
 
