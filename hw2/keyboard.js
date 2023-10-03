@@ -92,6 +92,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
             delete activeOscillators[key];
             delete activeAdditiveOscs[key];
             delete activeAMOscs[key];
+            delete activeFMOscs[key];
             delete activeGains[key];
         }
     }
@@ -100,13 +101,16 @@ document.addEventListener("DOMContentLoaded", function (event) {
         var synthType =  document.querySelector('input[name="synthesis"]:checked').value
         var waveformType = document.querySelector('input[name="waveform"]:checked').value
 
-
         if (synthType == "additive") {
             additivePlayNote(key)
         } else if (synthType == "am") {
             console.log("AM BABY")
             AMPlayNote(key);
-        } else { // no synthesis, normal from hw 1
+        } else if (synthType == "fm") {
+            console.log("FM BABY")
+            FMPlayNote(key);
+        }
+        else { // no synthesis, normal from hw 1
             normalPlayNote(key)
         }
         
@@ -226,6 +230,39 @@ document.addEventListener("DOMContentLoaded", function (event) {
         modulated.connect(gainNode);
         gainNode.connect(globalGain)
         
+        carrier.start();
+        modulatorFreq.start();
+
+        activeGains[key] = gainNode
+    }
+
+    function FMPlayNote(key) { 
+        var curFreq = keyboardFrequencyMap[key]
+        // TODO: how to set type here? on carrier or modulator or both...?
+        var waveformType = document.querySelector('input[name="waveform"]:checked').value
+        var gainNode;
+
+        var carrier = audioCtx.createOscillator();
+        var modulatorFreq = audioCtx.createOscillator();
+    
+        var modulationIndex = audioCtx.createGain();
+        // TODO: directly setting vs setValueAtTime??
+        modulationIndex.gain.value = 100;
+        modulatorFreq.frequency.value = 100;
+        carrier.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
+        
+        activeOscillators[key] = carrier
+        activeFMOscs[key] = modulatorFreq
+
+        // create gain, ADSR A and D
+        gainNode = gainAttackDecay()
+
+        modulatorFreq.connect(modulationIndex);
+        modulationIndex.connect(carrier.frequency)
+        
+        carrier.connect(gainNode);
+        gainNode.connect(globalGain)
+    
         carrier.start();
         modulatorFreq.start();
 
