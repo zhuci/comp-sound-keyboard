@@ -38,7 +38,22 @@ export const keyboardFrequencyMap = {
     '85': 987.766602512248223,  //U - B
 }
 
-sliders()
+// sliders and values
+var additivePartialsSlider = document.getElementById("additivePartials");
+var additivePartialOutput = document.getElementById("additivePartialsValue");
+additivePartialOutput.innerHTML = additivePartialsSlider.value;
+
+additivePartialsSlider.oninput = function() {
+    additivePartialOutput.innerHTML = this.value;
+}
+
+var additiveRandSlider = document.getElementById("additiveRand");
+var additiveRandOutput = document.getElementById("additiveRandValue");
+additiveRandOutput.innerHTML = additiveRandSlider.value;
+
+additiveRandSlider.oninput = function() {
+    additiveRandOutput.innerHTML = this.value + '%';
+}
 
 
 document.addEventListener("DOMContentLoaded", function (event) {
@@ -83,65 +98,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
     function playNote(key) {
         var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var synthType =  document.querySelector('input[name="synthesis"]:checked').value
-        
-        console.log("synth", document.querySelector('input[name="synthesis"]:checked').value);
-
-        console.log("partials", document.getElementById("additivePartials").value);
-
 
         var gainNode;
         var curFreq = keyboardFrequencyMap[key]
 
         if (synthType == "additive") {
-            const osc = audioCtx.createOscillator();
-           
-            // default osc
-            osc.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
-            osc.type = waveformType;
-            activeOscillators[key] = osc;
-
-            var maxPartial = parseInt(additivePartialsSlider.value) + 1;
-            var newOscs = [];
-
-            // partial osc
-            for (let i = 2; i < maxPartial; i++) {
-                var curOsc = audioCtx.createOscillator();
-                var randSign = Math.random() < 0.5 ? -1 : 1;
-                var additiveRandRange = curFreq * parseInt(additiveRandSlider.value) / 100
-                console.log("aas", additiveRandRange, curFreq, parseInt(additiveRandSlider.value))
-                curOsc.frequency.value = (i * curFreq) + randSign * Math.random() * additiveRandRange;
-                curOsc.type = waveformType;
-                newOscs.push(curOsc)
-            } 
-            activeAdditiveOscs[key] = newOscs;
-
-            // create gain, ADSR A and D
-            gainNode = gainAttackDecay()
-            // // connect and start
-            osc.connect(gainNode).connect(globalGain);
-            osc.start();
-
-            for (let i in newOscs) {
-                newOscs[i].connect(gainNode)
-                newOscs[i].start();
-            }
+            additivePlayNote(key)
 
         } else { // no synthesis, normal from hw 1
-            const osc = audioCtx.createOscillator();
-            osc.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
-            // choose your favorite waveform
-            osc.type = waveformType;
-            activeOscillators[key] = osc
-
-            // create gain, ADSR A and D
-            gainNode = gainAttackDecay()
-            // // connect and start
-            osc.connect(gainNode).connect(globalGain);
-            osc.start();
+            normalPlayNote(key)
         }
         
-        activeGains[key] = gainNode
-
         // confetti for fun!
         confettiHelper(key, waveformType);
     }
@@ -155,7 +122,6 @@ document.addEventListener("DOMContentLoaded", function (event) {
         for (let k in activeAdditiveOscs) {
             activeOscCount += activeAdditiveOscs[k].length  
         }
-        console.log("active count", activeOscCount)
 
         // adjust for active notes
         Object.values(activeGains).forEach(function (gainNode) {
@@ -170,6 +136,66 @@ document.addEventListener("DOMContentLoaded", function (event) {
         gainNode.gain.setTargetAtTime(sustainGain / activeOscCount, audioCtx.currentTime + attackTime, decayConstant);
         
         return gainNode
+    }
+
+    function additivePlayNote(key) {
+        var curFreq = keyboardFrequencyMap[key]
+        var waveformType = document.querySelector('input[name="waveform"]:checked').value
+        var gainNode;
+        
+        // default osc
+        const osc = audioCtx.createOscillator();
+        osc.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
+        osc.type = waveformType;
+        activeOscillators[key] = osc;
+
+        var maxPartial = parseInt(additivePartialsSlider.value) + 1;
+        var newOscs = [];
+
+        // partial osc
+        for (let i = 2; i < maxPartial; i++) {
+            var curOsc = audioCtx.createOscillator();
+            var randSign = Math.random() < 0.5 ? -1 : 1;
+            var additiveRandRange = curFreq * parseInt(additiveRandSlider.value) / 100
+            curOsc.frequency.value = (i * curFreq) + randSign * Math.random() * additiveRandRange;
+            curOsc.type = waveformType;
+            newOscs.push(curOsc)
+        } 
+        activeAdditiveOscs[key] = newOscs;
+
+        // create gain, ADSR A and D
+        gainNode = gainAttackDecay()
+        // // connect and start
+        osc.connect(gainNode).connect(globalGain);
+        osc.start();
+
+        for (let i in newOscs) {
+            newOscs[i].connect(gainNode)
+            newOscs[i].start();
+        }
+
+        activeGains[key] = gainNode
+    }
+
+    function normalPlayNote(key) {
+        var curFreq = keyboardFrequencyMap[key]
+        var waveformType = document.querySelector('input[name="waveform"]:checked').value
+        var gainNode;
+        
+        const osc = audioCtx.createOscillator();
+        osc.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
+        // choose your favorite waveform
+        osc.type = waveformType;
+        activeOscillators[key] = osc
+
+        // create gain, ADSR A and D
+        gainNode = gainAttackDecay()
+        // // connect and start
+        osc.connect(gainNode).connect(globalGain);
+        osc.start();
+
+        activeGains[key] = gainNode
+        
     }
 
     // from prof's Waveform visualizer
@@ -213,22 +239,3 @@ document.addEventListener("DOMContentLoaded", function (event) {
     }
 
 })
-
-// sliders and values
-function sliders() {
-    var additivePartialsSlider = document.getElementById("additivePartials");
-    var additivePartialOutput = document.getElementById("additivePartialsValue");
-    additivePartialOutput.innerHTML = additivePartialsSlider.value;
-
-    additivePartialsSlider.oninput = function() {
-        additivePartialOutput.innerHTML = this.value;
-    }
-
-    var additiveRandSlider = document.getElementById("additiveRand");
-    var additiveRandOutput = document.getElementById("additiveRandValue");
-    additiveRandOutput.innerHTML = additiveRandSlider.value;
-
-    additiveRandSlider.oninput = function() {
-        additiveRandOutput.innerHTML = this.value + '%';
-    }
-}
