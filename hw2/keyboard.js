@@ -62,30 +62,73 @@ document.addEventListener("DOMContentLoaded", function (event) {
     var activeFMOscs = {}
     var activeGains = {}
     var activeLFOs= {}
+    var isKeyHeld = {};
 
     function keyDown(event) {
         const key = (event.detail || event.which).toString();
-        if (keyboardFrequencyMap[key] && !activeOscillators[key]) {
+        // if (keyboardFrequencyMap[key] && !activeOscillators[key]) {
+        if (keyboardFrequencyMap[key]) {
             playNote(key);
+            isKeyHeld[key] = true;
         }
     }
 
     function keyUp(event) {
         const key = (event.detail || event.which).toString();
-        if (keyboardFrequencyMap[key] && activeOscillators[key]) {
+        // if (keyboardFrequencyMap[key] && activeOscillators[key]) {
+        if (keyboardFrequencyMap[key]) {
+            isKeyHeld[key] = false;
+            if (activeOscillators[key]) {
             // ADSR Release
             activeGains[key].gain.setTargetAtTime(0, audioCtx.currentTime, releaseConstant);
 
-            delete activeOscillators[key];
-            delete activeAdditiveOscs[key];
-            delete activeAMOscs[key];
-            delete activeFMOscs[key];
-            delete activeGains[key];
-            delete activeLFOs[key];
-        }
+            setTimeout(function () {
+                // stop oscs
+                if (activeGains[key].gain.value < 1e-6) {
+                    activeOscillators[key].stop()
+                    if (key in activeAdditiveOscs) {
+                        for (let i in activeAdditiveOscs[key]) {
+                            console.log("stop add")
+                            activeAdditiveOscs[key][i].stop()
+                        }
+                    }
+                    if (key in activeAMOscs) {
+                        activeAMOscs[key].stop()
+                    }
+                    if (key in activeFMOscs) {
+                        activeFMOscs[key].stop()
+                    }
+                    if (key in activeLFOs) {
+                        for (let i in activeLFOs[key]) {
+                            console.log("stop lfo")
+                            activeLFOs[key][i].stop()
+                        }
+                    }
+                    // delete oscs
+                    delete activeOscillators[key];
+                    delete activeAdditiveOscs[key];
+                    delete activeAMOscs[key];
+                    delete activeFMOscs[key];
+                    delete activeGains[key];
+                    delete activeLFOs[key];
+                }
+            }, 1000);
+
+            // delete oscs
+            // delete activeOscillators[key];
+            // delete activeAdditiveOscs[key];
+            // delete activeAMOscs[key];
+            // delete activeFMOscs[key];
+            // delete activeGains[key];
+            // delete activeLFOs[key];
+        
+            // console.log("len lfos:", Object.keys(activeLFOs).length)
+        }}
     }
 
     function playNote(key) {
+        if (isKeyHeld[key]) return;
+
         synthType = document.querySelector('input[name="synthesis"]:checked').value
         waveformType = document.querySelector('input[name="waveform"]:checked').value
         var lfoOnNote = document.querySelector("input[id=isLFO]").checked
@@ -190,17 +233,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
         for (let i in newOscs) {
             // LFO
-            // if (isLFO == true) {
-            //     addLFO(key, newOscs[i])
-            // }
+            if (isLFO == true) {
+                addLFO(key, newOscs[i])
+            }
             newOscs[i].connect(gainNode)
             newOscs[i].start();
         }
 
         // LFO 
-        // if (isLFO == true) {
-        //     addLFO(key, osc)
-        // }
+        if (isLFO == true) {
+            addLFO(key, osc)
+        }
 
         activeGains[key] = gainNode
     }
