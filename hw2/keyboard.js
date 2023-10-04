@@ -190,17 +190,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
         for (let i in newOscs) {
             // LFO
-            if (isLFO == true) {
-                addLFO(key, newOscs[i])
-            }
+            // if (isLFO == true) {
+            //     addLFO(key, newOscs[i])
+            // }
             newOscs[i].connect(gainNode)
             newOscs[i].start();
         }
 
         // LFO 
-        if (isLFO == true) {
-            addLFO(key, osc)
-        }
+        // if (isLFO == true) {
+        //     addLFO(key, osc)
+        // }
 
         activeGains[key] = gainNode
     }
