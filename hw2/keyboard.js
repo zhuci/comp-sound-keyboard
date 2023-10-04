@@ -38,23 +38,9 @@ export const keyboardFrequencyMap = {
     '85': 987.766602512248223,  //U - B
 }
 
-// sliders and values
-var additivePartialsSlider = document.getElementById("additivePartials");
-var additivePartialOutput = document.getElementById("additivePartialsValue");
-additivePartialOutput.innerHTML = additivePartialsSlider.value;
-
-additivePartialsSlider.oninput = function() {
-    additivePartialOutput.innerHTML = this.value;
-}
-
-var additiveRandSlider = document.getElementById("additiveRand");
-var additiveRandOutput = document.getElementById("additiveRandValue");
-additiveRandOutput.innerHTML = additiveRandSlider.value;
-
-additiveRandSlider.oninput = function() {
-    additiveRandOutput.innerHTML = this.value + '%';
-}
-
+var synthType = document.querySelector('input[name="synthesis"]:checked').value
+var waveformType = document.querySelector('input[name="waveform"]:checked').value
+const synthControlsContainer = document.getElementById("synthControlsContainer");
 
 document.addEventListener("DOMContentLoaded", function (event) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -75,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     var activeAMOscs = {}
     var activeFMOscs = {}
     var activeGains = {}
+    var activeLFOs= {}
 
     function keyDown(event) {
         const key = (event.detail || event.which).toString();
@@ -94,33 +81,28 @@ document.addEventListener("DOMContentLoaded", function (event) {
             delete activeAMOscs[key];
             delete activeFMOscs[key];
             delete activeGains[key];
+            delete activeLFOs[key];
         }
     }
 
     function playNote(key) {
-        var synthType =  document.querySelector('input[name="synthesis"]:checked').value
-        var waveformType = document.querySelector('input[name="waveform"]:checked').value
+        synthType = document.querySelector('input[name="synthesis"]:checked').value
+        waveformType = document.querySelector('input[name="waveform"]:checked').value
+        var lfoOnNote = document.querySelector("input[id=isLFO]").checked
 
+        console.log("lfoOnNote", lfoOnNote)
         if (synthType == "additive") {
-            additivePlayNote(key)
+            additivePlayNote(key, waveformType, lfoOnNote)
         } else if (synthType == "am") {
             console.log("AM BABY")
-            AMPlayNote(key);
+            AMPlayNote(key, waveformType, lfoOnNote);
         } else if (synthType == "fm") {
             console.log("FM BABY")
-            FMPlayNote(key);
+            FMPlayNote(key, waveformType, lfoOnNote);
         }
         else { // no synthesis, normal from hw 1
-            normalPlayNote(key)
+            normalPlayNote(key, waveformType, lfoOnNote)
         }
-
-        // TODO: LFO? which oscilator should it be on...? is it only for additive or also AM and FM?
-        // var lfo = audioCtx.createOscillator();
-        // lfo.frequency.value = 0.5;
-        // var lfoGain = audioCtx.createGain();
-        // lfoGain.gain.value = 8;
-        // lfo.connect(lfoGain).connect(osc2.frequency);
-        // lfo.start();
         
         // confetti for fun!
         confettiHelper(key, waveformType);
@@ -135,7 +117,6 @@ document.addEventListener("DOMContentLoaded", function (event) {
         for (let k in activeAdditiveOscs) {
             activeOscCount += activeAdditiveOscs[k].length  
         }
-        console.log("activeOscCount", activeOscCount)
 
         // adjust for active notes
         Object.values(activeGains).forEach(function (gainNode) {
@@ -152,9 +133,8 @@ document.addEventListener("DOMContentLoaded", function (event) {
         return gainNode
     }
 
-    function normalPlayNote(key) {
+    function normalPlayNote(key, waveformType, isLFO) {
         var curFreq = keyboardFrequencyMap[key]
-        var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var gainNode;
         
         const osc = audioCtx.createOscillator();
@@ -169,12 +149,16 @@ document.addEventListener("DOMContentLoaded", function (event) {
         osc.connect(gainNode).connect(globalGain);
         osc.start();
 
+        // LFO 
+        if (isLFO == true) {
+            addLFO(key, osc)
+        }
+
         activeGains[key] = gainNode
     }
 
-    function additivePlayNote(key) {
+    function additivePlayNote(key, waveformType, isLFO) {
         var curFreq = keyboardFrequencyMap[key]
-        var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var gainNode;
         
         // default osc
@@ -183,14 +167,15 @@ document.addEventListener("DOMContentLoaded", function (event) {
         osc.type = waveformType;
         activeOscillators[key] = osc;
 
-        var maxPartial = parseInt(additivePartialsSlider.value) + 1;
+        var maxPartial = parseInt(document.getElementById("parSlider").value) + 1;
         var newOscs = [];
 
         // partial osc
         for (let i = 2; i < maxPartial; i++) {
             var curOsc = audioCtx.createOscillator();
             var randSign = Math.random() < 0.5 ? -1 : 1;
-            var additiveRandRange = curFreq * parseInt(additiveRandSlider.value) / 100
+            var randPercent = parseInt(document.getElementById("randSlider").value)
+            var additiveRandRange = curFreq * randPercent / 100
             curOsc.frequency.value = (i * curFreq) + randSign * Math.random() * additiveRandRange;
             curOsc.type = waveformType;
             newOscs.push(curOsc)
@@ -204,24 +189,35 @@ document.addEventListener("DOMContentLoaded", function (event) {
         osc.start();
 
         for (let i in newOscs) {
+            // LFO
+            if (isLFO == true) {
+                addLFO(key, newOscs[i])
+            }
             newOscs[i].connect(gainNode)
             newOscs[i].start();
+        }
+
+        // LFO 
+        if (isLFO == true) {
+            addLFO(key, osc)
         }
 
         activeGains[key] = gainNode
     }
 
-    function AMPlayNote(key) {
+    function AMPlayNote(key, waveformType, isLFO) {
         var curFreq = keyboardFrequencyMap[key]
         // TODO: how to set type here? on carrier or modulator or both...?
-        var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var gainNode;
 
         var carrier = audioCtx.createOscillator();
         var modulatorFreq = audioCtx.createOscillator();
-        modulatorFreq.frequency.setValueAtTime(100, audioCtx.currentTime);
-        carrier.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
-    
+
+        modulatorFreq.type = waveformType;
+        carrier.type = waveformType;
+        modulatorFreq.frequency.value = parseInt(document.getElementById("MFSlider").value);
+        carrier.frequency.value = curFreq;
+
         const modulated = audioCtx.createGain();
         const depth = audioCtx.createGain();
         depth.gain.value = 0.5 //scale modulator output to [-0.5, 0.5]
@@ -241,24 +237,31 @@ document.addEventListener("DOMContentLoaded", function (event) {
         carrier.start();
         modulatorFreq.start();
 
+        // LFO 
+        if (isLFO == true) {
+            addLFO(key, carrier)
+            addLFO(key, modulatorFreq)
+        }
+
         activeGains[key] = gainNode
     }
 
-    function FMPlayNote(key) { 
+    function FMPlayNote(key, waveformType, isLFO) { 
         var curFreq = keyboardFrequencyMap[key]
         // TODO: how to set type here? on carrier or modulator or both...?
-        var waveformType = document.querySelector('input[name="waveform"]:checked').value
         var gainNode;
 
         var carrier = audioCtx.createOscillator();
         var modulatorFreq = audioCtx.createOscillator();
-    
+
+        modulatorFreq.type = waveformType;
+        carrier.type = waveformType;
+        modulatorFreq.frequency.value = parseInt(document.getElementById("MFSlider").value);
+        carrier.frequency.value = curFreq
+
         var modulationIndex = audioCtx.createGain();
-        // TODO: directly setting vs setValueAtTime??
-        modulationIndex.gain.value = 100;
-        modulatorFreq.frequency.value = 100;
-        carrier.frequency.setValueAtTime(curFreq, audioCtx.currentTime);
-        
+        modulationIndex.gain.value = parseInt(document.getElementById("MISlider").value);
+
         activeOscillators[key] = carrier
         activeFMOscs[key] = modulatorFreq
 
@@ -274,7 +277,33 @@ document.addEventListener("DOMContentLoaded", function (event) {
         carrier.start();
         modulatorFreq.start();
 
+        // LFO 
+        if (isLFO == true) {
+            addLFO(key, carrier)
+            addLFO(key, modulatorFreq)
+        }
+
         activeGains[key] = gainNode
+    }
+
+    function addLFO(key, osc){
+        console.log("in heree")
+        var lfo = audioCtx.createOscillator();
+        lfo.frequency.value = parseInt(document.getElementById("LFOFSlider").value);
+        var lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = parseInt(document.getElementById("LFOGSlider").value);
+        lfo.connect(lfoGain).connect(osc.frequency);
+        lfo.start();
+
+        if (key in activeLFOs){
+            activeLFOs[key].push(lfo)
+            console.log("activelfos key", activeLFOs[key])
+        }
+        else {
+            console.log("activelfos key no prev")
+            activeLFOs[key] = [lfo]
+        }
+            
     }
 
     // from prof's Waveform visualizer
@@ -318,3 +347,74 @@ document.addEventListener("DOMContentLoaded", function (event) {
     }
 
 })
+
+// sliders and values
+
+// show controls based on type
+const synthRadioButtons = document.querySelectorAll('input[name="synthesis"]');
+for(const radioButton of synthRadioButtons){
+    radioButton.addEventListener('change', showSynthControls);
+}    
+
+// LFO 
+let LFOcheckbox = document.querySelector("input[id=isLFO]");
+LFOcheckbox.addEventListener('change', showLFOControls);
+
+function showSynthControls(e) {
+    const curSynth = this.value;
+    // remove previous stuff inside (text, sliders, etc)
+    synthControlsContainer.innerHTML = "";
+
+    if (curSynth == "additive") {
+        createSlider("Number of Partials: ", synthControlsContainer, "parSlider", 1, 10, 1, 5);
+        createSlider("Percent of Randomness: ", synthControlsContainer, "randSlider", 0, 5, 0.5, 1);
+    } else if (curSynth == "am") {
+        createSlider("Modulation Frequency: ", synthControlsContainer, "MFSlider", 1, 1000, 1, 100);
+    } else if (curSynth == "fm") {
+        createSlider("Modulation Frequency: ", synthControlsContainer, "MFSlider", 1, 1000, 1, 100);
+        createSlider("Modulation Index: ", synthControlsContainer, "MISlider", 1, 1000, 1, 100);
+    }
+}
+
+function showLFOControls(e) {
+    const isLFO = this.checked;
+    // remove previous stuff inside (text, sliders, etc)
+    lfoSliderContainer.innerHTML = "";
+    
+    // If the checkbox is checked, display the LFO sliders
+    if (isLFO == true){
+        createSlider("LFO Frequency: ", lfoSliderContainer, "LFOFSlider", 0, 5, 0.5, 1);
+        createSlider("Modulation Index: ", lfoSliderContainer, "LFOGSlider", 0, 10, 1, 8);
+    } 
+}
+
+function createSlider(labelText, container, id, minVal, maxVal, step, value) { 
+    // Create label for the slider
+    // const label = document.createElement("label");
+    // label.textContent = labelText;
+    const label = document.createElement("p");
+    label.innerText = labelText;
+    container.appendChild(label);
+
+    // Create slider
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = minVal;
+    slider.max = maxVal;
+    slider.value = value; 
+    slider.step = step
+    slider.id = id;
+    container.appendChild(slider);
+
+    // Create span element to display the selected value
+    const valueOutput = document.createElement("span");
+    valueOutput.id = "sliderValue";
+    valueOutput.textContent = " " + slider.value;
+    container.appendChild(valueOutput);
+
+    // Update value in span when slider changed
+    slider.addEventListener("input", function () {
+        valueOutput.textContent = " " + slider.value;
+  });
+
+}

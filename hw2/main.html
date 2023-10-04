@@ -15,48 +15,62 @@
 <body>
     <!-- <button>Play</button> -->
     <h1>Cindy's Lab 2 ✨</h1>
-
     <p> do you ever feel like a plastic bag...🎆</p>
-    <h3>Select Waveform 😎</h4>
-    <form id="osc_Type">
-        <input type="radio" id="sine" name="waveform" value="sine" checked>
-        <label for="sine">Sine</label>
-        <input type="radio" id="sawtooth" name="waveform" value="sawtooth">
-        <label for="sawtooth">Sawtooth</label>
-        <input type="radio" id="square" name="waveform" value="square">
-        <label for="square">Square</label>
-        <input type="radio" id="triangle" name="waveform" value="triangle">
-        <label for="triangle">Triangle</label>
-    </form>
-
-    <h3> Waveform Visualizer 🤯</h4>
 
     <div class="container">
-        <canvas id="globalVisualizer" width="200" height="100" style="border:3px solid lightblue">
-            wave form visualizer
-        </canvas>
+        <div class="box">
+            <h3>Select Waveform 😎</h3>
+            <form id="osc_Type">
+                <input type="radio" id="sine" name="waveform" value="sine" checked>
+                <label for="sine">Sine</label>
+                <input type="radio" id="sawtooth" name="waveform" value="sawtooth">
+                <label for="sawtooth">Sawtooth</label>
+                <input type="radio" id="square" name="waveform" value="square">
+                <label for="square">Square</label>
+                <input type="radio" id="triangle" name="waveform" value="triangle">
+                <label for="triangle">Triangle</label>
+            </form>
+
+            <h3>Select Synthesis 😎</h4>
+            <form id="osc_Type">
+                <input type="radio" id="none" name="synthesis" value="none" checked>
+                <label for="none">None</label>
+                <input type="radio" id="additive" name="synthesis" value="additive">
+                <label for="additive">Additive</label>
+                <input type="radio" id="am" name="synthesis" value="am">
+                <label for="am">AM Synthesis</label>
+                <input type="radio" id="fm" name="synthesis" value="fm">
+                <label for="fm">FM Synthesis</label>
+            </form>
+
+            <div id="synthControlsContainer"></div>
+
+            <div id="lfoContainer">
+                <form id="isLFOForm">
+                    <label for="isLFO">LFO? </label>
+                    <input type="checkbox" id="isLFO" name="isLFO" value="Yes">
+                </form>
+                <div id="lfoSliderContainer"></div>
+            </div>
+        </div>
+
+        <div class="box">
+            <h3> Waveform Visualizer 🤯</h4>
+            <div class="draw_container">
+                <canvas id="globalVisualizer" width="400" height="200" style="border:3px solid lightblue">
+                    wave form visualizer
+                </canvas>
+            </div>
+        </div>
     </div>
 
-    <h3>Select Synthesis 😎</h4>
-    <form id="osc_Type">
-        <input type="radio" id="none" name="synthesis" value="none" checked>
-        <label for="none">None</label>
-        <input type="radio" id="additive" name="synthesis" value="additive">
-        <label for="additive">Additive</label>
-        <input type="radio" id="am" name="synthesis" value="am">
-        <label for="am">AM Synthesis</label>
-        <input type="radio" id="fm" name="synthesis" value="fm">
-        <label for="fm">FM Synthesis</label>
-    </form>
-
-    <h4>How many additive partials? </h4>
-    <input type="range" min="1" max="10" value="5" class="additivePartials" id="additivePartials">
-    <span id="additivePartialsValue"></span>
-
-    <h4>How random?</h4>
-    <input type="range" min="0" max="5" step="0.5" value="1" class="additiveRand" id="additiveRand">
-    <span id="additiveRandValue"></span>
-
+    <!-- <div id="lfoContainer">
+        <form id="isLFO">
+            <label for="isF">LFO? </label>
+            <input type="checkbox" id="vehicle1" name="vehicle1" value="Yes">
+        </form>
+        <div id="lfoSliderContainer"></div>
+    </div> -->
 </body>
 
 <!-- <script src="main.js"></script> -->
