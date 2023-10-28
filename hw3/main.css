@@ -1,0 +1,21 @@
+body {
+    background-color: black;
+    font-family: 'Space Mono', monospace;
+    color: white;
+  }
+  
+  .container {
+    display: flex; /* Use flexbox to arrange the child elements */
+  }
+  
+  .box {
+    flex: 1; /* Each box takes up an equal amount of space */
+  }
+  
+  #lfoContainer{
+    padding-top: 1rem;
+  }
+  
+  #lfoContainer label {
+    font-size: 1.17rem;
+  }
