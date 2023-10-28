@@ -22,11 +22,11 @@ const epsilon = 0.001;
 soundType.addEventListener("change", function () {
 	if (document.getElementById("soundType").value == "babblingBrook") {
 		startButton.textContent = "start/stop";
-	//   blog.style.display = "none";
+	  blog.style.display = "none";
 	  babblingText.style.display = "block";
 	} else {
 		startButton.textContent = "play";
-	//   blog.style.display = "block";
+		blog.style.display = "block";
 		babblingText.style.display = "none";
 	}
   });
@@ -125,8 +125,8 @@ function initR2D2Audio() {
 	while (i < 1000) {
 		var randPeriod = getRandomFloat(0, 0.25)
 		var randCarrierFreq = getRandomFloat(500, 2000.0)
-		var randModFreq = getRandomFloat(1, 1000.0)
-		var randModIndex =  getRandomFloat(1, 1000.0)
+		var randModFreq = getRandomFloat(1, 2000.0)
+		var randModIndex =  getRandomFloat(1, 2000.0)
 		var randWaveform = getRandomInt(0,3)
 		FMPlayNote(curTime, curTime + randPeriod, randCarrierFreq, randModFreq, randModIndex, randWaveform)
 		i++;
@@ -148,9 +148,6 @@ function FMPlayNote(startTime, stopTime, carrierFreq, modFreq, modIndex, wavefor
 
 	var modulationIndex = audioCtxR2D2.createGain();
 	modulationIndex.gain.value = modIndex;
-
-	// activeOscillators[key] = carrier
-	// activeFMOscs[key] = modulatorFreq
 
 	// create gain, ADSR A and D
 	gainNode = gainAttackDecay()
@@ -174,17 +171,6 @@ function FMPlayNote(startTime, stopTime, carrierFreq, modFreq, modIndex, wavefor
 function gainAttackDecay() {
 	// create gain 
 	const gainNode = audioCtxR2D2.createGain();
-
-	// // active Osc
-	// var activeOscCount = Object.keys(activeOscillators).length + Object.keys(activeAMOscs).length + Object.keys(activeFMOscs).length;
-	// for (let k in activeAdditiveOscs) {
-	//     activeOscCount += activeAdditiveOscs[k].length  
-	// }
-
-	// // adjust for active notes
-	// Object.values(activeGains).forEach(function (gainNode) {
-	//     gainNode.gain.setTargetAtTime(attackMaxGain / activeOscCount, audioCtx.currentTime, epsilon);
-	// });
 
 	// ADSR Attack
 	gainNode.gain.setValueAtTime(0.001, audioCtxR2D2.currentTime);
