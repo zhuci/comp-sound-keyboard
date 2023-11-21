@@ -3,18 +3,29 @@
 
 <head>
   <meta charset="utf‐8">
-  <title> Hello web audio </title>
+  <title> Cindy's Lab 4 </title>
+  <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
-  <p>This is an almost minimal command-based live coding engine. Press the button to re-evaluate your code.
-    This language allows you to specify a rhythmic pattern of beats by entering a space-separated list of times and pitches. 
-    You can also include javascript computation in the values.
-    As an example:
+  <h1>Cindy's Lab 4 Part 1</h1>
+  <p> This live coding language is modified from Prof. Santolucito's, which was a minimal command-based live coding engine. 
+    I have added 3 new features:</p>
+  <ol>
+    <li>Waveform Type: Sine, Sawtooth, Square, Triangle</li>
+    <li>Rests: Pitches that are 0Hz will be as rests for the lenght specified </li>
+    <li>Amplitude: Can be specified between 0 and 1, defaults to 0.75</li>
+  </ol>
+  <p> To use the live coding engine, press the button to re-evaluate your code.
+  This language allows you to specify a rhythmic pattern of beats by entering a space-separated list of times and pitches and amplitude (optional). 
+  You can also specify the type of waveform at the beginning of the code or it'll default to sine
+  You can also include javascript computation in the values.
+  As an example:
   </p>
-  <p>1+1@220 2@220*2 1*3@270</p>
+  <p>triangle 1+1@220@0.25 3@0 2@220*2 1*3@270</p>
+  <textarea id="code" rows="4" cols="50"></textarea>
+  <br>
   <button>re-evaluate</button>
-  <input type="text" id="code">
 </body>
 <script src="main.js"> </script>
 

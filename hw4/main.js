@@ -18,11 +18,18 @@ function initAudio() {
 function scheduleAudio() {
     let timeElapsedSecs = 0;
     liveCodeState.forEach(noteData => {
-        timings.gain.setTargetAtTime(1, audioCtx.currentTime + timeElapsedSecs, 0.01)
-        osc.frequency.setTargetAtTime(noteData["pitch"], audioCtx.currentTime + timeElapsedSecs, 0.01)
-        timeElapsedSecs += noteData["length"]/10.0;
-        timings.gain.setTargetAtTime(0, audioCtx.currentTime + timeElapsedSecs, 0.01)
-        timeElapsedSecs += 0.2; //rest between notes
+        // have a rest for specified length
+        console.log("amp", noteData["amp"])
+        if (noteData["pitch"] === 0) {
+            timeElapsedSecs += noteData["length"]/10.0 + 0.2;
+        }
+        else {
+            timings.gain.setTargetAtTime(noteData["amp"], audioCtx.currentTime + timeElapsedSecs, 0.01)
+            osc.frequency.setTargetAtTime(noteData["pitch"], audioCtx.currentTime + timeElapsedSecs, 0.01)
+            timeElapsedSecs += noteData["length"]/10.0;
+            timings.gain.setTargetAtTime(0, audioCtx.currentTime + timeElapsedSecs, 0.01)
+            timeElapsedSecs += 0.2; //rest between notes
+        }
     });
     setTimeout(scheduleAudio, timeElapsedSecs * 1000);
 }
@@ -51,8 +58,8 @@ function parseCode(code) {
     notes = notes.map(note => {
         noteData = note.split("@");
         return   {"length" : eval(noteData[0]), //the 'eval' function allows us to write js code in our live coding language
-                "pitch" : eval(noteData[1])}
-                // "waveform" : noteData[2] ? noteData[2] : "sine"}
+                "pitch" : eval(noteData[1]),
+                "amp": eval(noteData[2]) <= 1 && eval(noteData[2]) >= 0 ? eval(noteData[2]) : 0.75}
                 //what other things should be controlled? osc type? synthesis technique?
     });
     return notes;
